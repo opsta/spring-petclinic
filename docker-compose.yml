@@ -1,9 +1,25 @@
-mysql:
-  image: mysql:5.7
-  ports:
-    - "3306:3306"
-  environment:
-    - MYSQL_ROOT_PASSWORD=petclinic
-    - MYSQL_DATABASE=petclinic
-  volumes:
-    - "./conf.d:/etc/mysql/conf.d:ro"
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      PETCLINIC_LOGGING_LEVEL: INFO
+      PETCLINIC_DB: mysql
+      MYSQL_HOSTNAME: db
+      MYSQL_DATABASE_NAME: petclinic
+      MYSQL_USERNAME: petuser
+      MYSQL_PASSWORD: petpass
+      MYSQL_PORT: 3306
+    depends_on:
+      - db
+  db:
+    image: mariadb:10.3.6
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: petclinic
+      MYSQL_USER: petuser
+      MYSQL_PASSWORD: petpass

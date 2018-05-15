@@ -1,0 +1,9 @@
+target/*
+src/test/*
+.vscode/*
+.settings/*
+.editorconfig
+.project
+.travis.yml
+docker-compose.yml
+Dockerfile
