@@ -89,7 +89,15 @@ volumes: [
       stage('Build Artifact') {
         container('java') {
           sh """
-            ./mvnw package -Dmaven.test.skip=true -s maven-settings.xml
+            ./mvnw clean test -s maven-settings.xml
+            """
+        }
+      }
+
+      stage('Build Artifact') {
+        container('java') {
+          sh """
+            ./mvnw clean package -Dmaven.test.skip=true -s maven-settings.xml
             """
           nexusArtifactUploader (
             nexusVersion: 'nexus3',
