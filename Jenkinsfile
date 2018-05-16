@@ -26,8 +26,9 @@ volumes: [
         container('docker') {
           imageTag = "registry.demo.opsta.co.th/${appName}:uat"
           imageTagProd = "registry.demo.opsta.co.th/${appName}:build-${env.BUILD_NUMBER}"
-          withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+          withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             sh """
+              docker login -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
               docker pull ${imageTag}
               docker tag ${imageTag} ${imageTagProd}
               docker push ${imageTagProd}
@@ -101,7 +102,7 @@ volumes: [
             artifacts: [
               [artifactId: 'petclinic',
               classifier: '',
-              file: 'spring-petclinic-2.0.0.BUILD-SNAPSHOT',
+              file: 'target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar',
               type: 'jar']
             ]
           )
@@ -110,17 +111,22 @@ volumes: [
 
       stage('Build image') {
         container('docker') {
-          sh """
-            echo ${scmVars.GIT_COMMIT} > VERSION
-            docker build -t ${imageTag} --build-arg MAVEN_OPTS="-s maven-settings.xml" .
-            """
+          withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+            sh """
+              mkdir target/
+              echo ${scmVars.GIT_COMMIT} > VERSION
+              wget --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/${env.BUILD_NUMBER}/petclinic-${env.BUILD_NUMBER}.jar
+              docker build -t ${imageTag} .
+              """
+          }
         }
       }
 
       stage('Push image to registry') {
         container('docker') {
-          withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+          withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             sh """
+              docker login -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
               docker push ${imageTag}
               """
           }
