@@ -28,7 +28,7 @@ volumes: [
           imageTagProd = "registry.demo.opsta.co.th/${appName}:build-${env.BUILD_NUMBER}"
           withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             sh """
-              docker login -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
+              docker login registry.demo.opsta.co.th -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
               docker pull ${imageTag}
               docker tag ${imageTag} ${imageTagProd}
               docker push ${imageTagProd}
@@ -113,9 +113,11 @@ volumes: [
         container('docker') {
           withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             sh """
-              mkdir target/
+              mkdir -p target/
               echo ${scmVars.GIT_COMMIT} > VERSION
-              wget --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/${env.BUILD_NUMBER}/petclinic-${env.BUILD_NUMBER}.jar
+              # Need for download from HTTPS
+              apk --no-cache add openssl wget
+              wget -O target/petclinic-${env.BUILD_NUMBER}.jar --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/build-${env.BUILD_NUMBER}/petclinic-build-${env.BUILD_NUMBER}.jar
               docker build -t ${imageTag} .
               """
           }
@@ -126,7 +128,7 @@ volumes: [
         container('docker') {
           withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             sh """
-              docker login -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
+              docker login registry.demo.opsta.co.th -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
               docker push ${imageTag}
               """
           }
