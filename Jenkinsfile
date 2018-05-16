@@ -8,12 +8,13 @@ properties([
 
 def label = "petclinic-${UUID.randomUUID().toString()}"
 podTemplate(label: label, cloud: 'kubernetes', containers: [
-    containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
-    containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm', command: 'cat', ttyEnabled: true),
-    containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git', command: 'cat', ttyEnabled: true)
-  ],
-  volumes: [
-    hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
+  containerTemplate(name: 'java', image: 'openjdk:8u151-jdk-alpine3.7', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git', ttyEnabled: true, command: 'cat')
+],
+volumes: [
+  hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
 ]) {
   node(label) {
 
@@ -83,6 +84,29 @@ podTemplate(label: label, cloud: 'kubernetes', containers: [
       }
 
       scmVars = checkout scm
+
+      stage('Build Artifact') {
+        container('java') {
+          sh """
+            ./mvnw package -Dmaven.test.skip=true -s maven-settings.xml
+            """
+          nexusArtifactUploader (
+            nexusVersion: 'nexus3',
+            protocol: 'https',
+            nexusUrl: 'nexus.demo.opsta.co.th/repository/maven-releases',
+            groupId: 'org.springframework.samples',
+            version: "build-${env.BUILD_NUMBER}",
+            repository: 'maven-releases',
+            credentialsId: 'nexus-credential',
+            artifacts: [
+              [artifactId: 'petclinic',
+              classifier: '',
+              file: 'spring-petclinic-2.0.0.BUILD-SNAPSHOT',
+              type: 'jar']
+            ]
+          )
+        }
+      }
 
       stage('Build image') {
         container('docker') {
