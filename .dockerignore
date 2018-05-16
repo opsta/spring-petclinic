@@ -1,4 +1,3 @@
-target/*
 src/test/*
 .vscode/*
 .settings/*

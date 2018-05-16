@@ -1,6 +1,6 @@
 web:
   image: registry.demo.opsta.co.th/petclinic
-  tag: latest
+  tag: dev
   logging: DEBUG
   replicas: 1
   commitId: CHANGE_COMMIT_ID

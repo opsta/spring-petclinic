@@ -1,6 +1,6 @@
 web:
   image: registry.demo.opsta.co.th/petclinic
-  tag: latest
+  tag: uat
   logging: INFO
   replicas: 3
   commitId: CHANGE_COMMIT_ID
