@@ -113,11 +113,13 @@ volumes: [
         container('docker') {
           withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             sh """
+              # Clean target directory
+              rm -rf target/
               mkdir -p target/
               echo ${scmVars.GIT_COMMIT} > VERSION
               # Need for download from HTTPS
               apk --no-cache add openssl wget
-              wget -O target/petclinic-${env.BUILD_NUMBER}.jar --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/build-${env.BUILD_NUMBER}/petclinic-build-${env.BUILD_NUMBER}.jar
+              wget -O target/petclinic-build-${env.BUILD_NUMBER}.jar --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/build-${env.BUILD_NUMBER}/petclinic-build-${env.BUILD_NUMBER}.jar
               docker build -t ${imageTag} .
               """
           }
