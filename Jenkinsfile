@@ -62,7 +62,7 @@ volumes: [
       stage('Deploy production') {
         scmVars = checkout scm
         container('helm') {
-          withCredentials([file(credentialsId: 'kubeconfig-kubernetes', variable: 'KUBECONFIG')]) {
+          withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
             sh """
               mkdir -p ~/.kube/
               cat $KUBECONFIG > ~/.kube/config
@@ -138,7 +138,7 @@ volumes: [
       stage("Deploy Application") {
         container('helm') {
           // Put kubeconfig file
-          withCredentials([file(credentialsId: 'kubeconfig-kubernetes', variable: 'KUBECONFIG')]) {
+          withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
             sh """
               mkdir -p ~/.kube/
               cat $KUBECONFIG > ~/.kube/config
