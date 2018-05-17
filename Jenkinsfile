@@ -12,11 +12,11 @@ podTemplate(label: label, cloud: 'kubernetes', containers: [
   containerTemplate(name: 'java', image: 'openjdk:8u171-jdk-stretch', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git', ttyEnabled: true, command: 'cat')
+  containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'jmeter', image: 'opsta/jmeter', ttyEnabled: true, command: 'cat')
 ],
 volumes: [
   hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
-  hostPathVolume(mountPath: '/tmp', hostPath: '/tmp')
 ]) {
   node(label) {
 
@@ -83,6 +83,11 @@ volumes: [
           break
         case "dev":
           imageTag = "registry.demo.opsta.co.th/${appName}:dev"
+          break
+        default:
+          sh """
+          exit 1
+          """
           break
       }
 
@@ -188,6 +193,17 @@ volumes: [
           }
         }
       }
+
+      stage("Run Performance Test") {
+        container('jmeter') {
+          sh """
+          sed -i 's/localhost/petclinic.${env.BRANCH_NAME}.demo.opsta.co.th/g' src/test/jmeter/petclinic_test_plan.jmx
+          jmeter -n -t src/test/jmeter/petclinic_test_plan.jmx -l performance.jtl -Jjmeter.save.saveservice.output_format=xml
+          """
+          perfReport sourceDataFiles: 'performance.jtl'
+        }
+      }
+
     }
   }
 }
