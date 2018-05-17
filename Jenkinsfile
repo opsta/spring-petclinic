@@ -108,6 +108,11 @@ volumes: [
             sh """
             cat target/surefire-reports/*.dump
             """
+            junit "**/target/surefire-reports/*.xml"
+            step([
+              $class: 'JUnitResultArchiver',
+              testResults: "**/target/surefire-reports/*.xml"
+            ])
             throw err
           }
         }
