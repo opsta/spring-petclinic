@@ -46,7 +46,7 @@ volumes: [
 
       stage('Tag commit id to version and push code') {
         container('git') {
-          sshagent(credentials: ['petclinic-1-git-deploy-key']) {
+          sshagent(credentials: ['petclinic-git-deploy-key']) {
             checkout scm
             checkout([$class: 'GitSCM',
               branches: [[name: CODE_VERSION ]]
@@ -141,27 +141,18 @@ volumes: [
         }
       }
 
-      stage('Build image') {
+      stage('Build docker image and push to registry') {
         container('docker') {
           withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             sh """
               # Clean target directory
-              rm -rf target/
+              rm -rf target
               mkdir -p target/
               echo ${scmVars.GIT_COMMIT} > VERSION
               # Need for download from HTTPS
               apk --no-cache add openssl wget
               wget -O target/petclinic-build-${env.BUILD_NUMBER}.jar --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/build-${env.BUILD_NUMBER}/petclinic-build-${env.BUILD_NUMBER}.jar
               docker build -t ${imageTag} .
-              """
-          }
-        }
-      }
-
-      stage('Push image to registry') {
-        container('docker') {
-          withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-            sh """
               docker login registry.demo.opsta.co.th -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
               docker push ${imageTag}
               """
