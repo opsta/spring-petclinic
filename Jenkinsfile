@@ -69,7 +69,7 @@ volumes: [
               mkdir -p ~/.kube/
               cat $KUBECONFIG > ~/.kube/config
               sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
-              sed -i 's/commitId: CHANGE_COMMIT_ID/value: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
+              sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
               helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod k8s/helm
               """
           }
@@ -173,7 +173,7 @@ volumes: [
             // Roll out a UAT environment on master branch
             case "master":
               sh """
-                sed -i 's/commitId: CHANGE_COMMIT_ID/value: ${scmVars.GIT_COMMIT}/g' k8s/values-uat.yaml
+                sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-uat.yaml
                 helm upgrade -i --namespace uat -f k8s/values-uat.yaml --wait petclinic-uat k8s/helm
                 """
               break
@@ -181,7 +181,7 @@ volumes: [
             // Roll out a dev environment
             case "dev":
               sh """
-                sed -i 's/commitId: CHANGE_COMMIT_ID/value: ${scmVars.GIT_COMMIT}/g' k8s/values-dev.yaml
+                sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-dev.yaml
                 helm upgrade -i --namespace dev -f k8s/values-dev.yaml --wait petclinic-dev k8s/helm
                 """
               break

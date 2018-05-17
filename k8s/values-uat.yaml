@@ -5,6 +5,7 @@ web:
   replicas: 2
   commitId: CHANGE_COMMIT_ID
   imagePullSecrets: nexus-credential
+  imagePullPolicy: Always
 db:
   image: mariadb
   tag: 10.3.6

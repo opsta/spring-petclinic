@@ -3,6 +3,7 @@ web:
   tag: latest
   logging: INFO
   replicas: 1
+  imagePullPolicy: Always
 db:
   image: mariadb
   tag: 10.3.6
