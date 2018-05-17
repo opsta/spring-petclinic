@@ -8,7 +8,8 @@ properties([
 
 def label = "petclinic-${UUID.randomUUID().toString()}"
 podTemplate(label: label, cloud: 'kubernetes', containers: [
-  containerTemplate(name: 'java', image: 'openjdk:8u151-jdk-alpine3.7', resourceLimitMemory: '1Gi', resourceRequestMemory: '1Gi', ttyEnabled: true, command: 'cat'),
+  // Don't use alpine version. It having problem with forking JVM such as running surefire and junit testing
+  containerTemplate(name: 'java', image: 'openjdk:8u171-jdk-stretch', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git', ttyEnabled: true, command: 'cat')
@@ -93,20 +94,27 @@ volumes: [
             sh """
             ./mvnw clean test -s maven-settings.xml -e
             """
+            // archiveArtifacts "target/*"
+            junit "**/target/surefire-reports/*.xml"
+            step([
+              $class: 'JUnitResultArchiver',
+              testResults: "**/target/surefire-reports/*.xml"
+            ])
           } catch(err) {
-            dir("/tmp/target") {
-              fileOperations([
-                fileCopyOperation(
-                  excludes: '',
-                  flattenFiles: false,
-                  includes: 'target/*',
-                  targetLocation: "${WORKSPACE}"
-                )
-              ])
-            }
-            junit '**/target/surefire-reports/*.xml'
-            step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+            sh """
+            cat target/surefire-reports/*
+            """
             throw err
+          }
+        }
+      }
+
+      stage('SonarQube analysis') {
+        container('java') {
+          withSonarQubeEnv('sonarqube-opsta') {
+            sh """
+            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:3.2:sonar
+            """
           }
         }
       }
