@@ -8,13 +8,14 @@ properties([
 
 def label = "petclinic-${UUID.randomUUID().toString()}"
 podTemplate(label: label, cloud: 'kubernetes', containers: [
-  containerTemplate(name: 'java', image: 'openjdk:8u151-jdk-alpine3.7', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'java', image: 'openjdk:8u151-jdk-alpine3.7', resourceLimitMemory: '1Gi', resourceRequestMemory: '1Gi', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git', ttyEnabled: true, command: 'cat')
 ],
 volumes: [
   hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
+  hostPathVolume(mountPath: '/tmp', hostPath: '/tmp')
 ]) {
   node(label) {
 
@@ -86,11 +87,27 @@ volumes: [
 
       scmVars = checkout scm
 
-      stage('Build Artifact') {
+      stage('Run Unit Test') {
         container('java') {
-          sh """
-            ./mvnw clean test -s maven-settings.xml
+          try {
+            sh """
+            ./mvnw clean test -s maven-settings.xml -e
             """
+          } catch(err) {
+            dir("/tmp/target") {
+              fileOperations([
+                fileCopyOperation(
+                  excludes: '',
+                  flattenFiles: false,
+                  includes: 'target/*',
+                  targetLocation: "${WORKSPACE}"
+                )
+              ])
+            }
+            junit '**/target/surefire-reports/*.xml'
+            step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+            throw err
+          }
         }
       }
 

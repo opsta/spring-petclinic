@@ -2,7 +2,7 @@ web:
   image: registry.demo.opsta.co.th/petclinic
   tag: latest
   logging: INFO
-  replicas: 3
+  replicas: 2
   commitId: CHANGE_COMMIT_ID
   imagePullSecrets: nexus-credential
 db:
