@@ -17,8 +17,9 @@ spec:
       - name: {{ .Values.web.imagePullSecrets }}
       {{- end }}
       containers:
-      - image: "{{ .Values.web.image }}:{{ .Values.web.tag }}"
-        name: {{ .Release.Name }}-web
+      - name: {{ .Release.Name }}-web
+        image: "{{ .Values.web.image }}:{{ .Values.web.tag }}"
+        imagePullPolicy: {{ .Values.web.imagePullPolicy }}
         env:
         - name: PETCLINIC_LOGGING_LEVEL
           value: "{{ .Values.web.logging }}"

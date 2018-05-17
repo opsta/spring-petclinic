@@ -46,7 +46,7 @@ volumes: [
 
       stage('Tag commit id to version and push code') {
         container('git') {
-          sshagent(credentials: ['petclinic-1-git-deploy-key']) {
+          sshagent(credentials: ['petclinic-git-deploy-key']) {
             checkout scm
             checkout([$class: 'GitSCM',
               branches: [[name: CODE_VERSION ]]
@@ -69,7 +69,7 @@ volumes: [
               mkdir -p ~/.kube/
               cat $KUBECONFIG > ~/.kube/config
               sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
-              sed -i 's/commitId: CHANGE_COMMIT_ID/value: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
+              sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
               helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod k8s/helm
               """
           }
@@ -141,27 +141,18 @@ volumes: [
         }
       }
 
-      stage('Build image') {
+      stage('Build docker image and push to registry') {
         container('docker') {
           withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             sh """
               # Clean target directory
-              rm -rf target/
+              rm -rf target
               mkdir -p target/
               echo ${scmVars.GIT_COMMIT} > VERSION
               # Need for download from HTTPS
               apk --no-cache add openssl wget
               wget -O target/petclinic-build-${env.BUILD_NUMBER}.jar --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/build-${env.BUILD_NUMBER}/petclinic-build-${env.BUILD_NUMBER}.jar
               docker build -t ${imageTag} .
-              """
-          }
-        }
-      }
-
-      stage('Push image to registry') {
-        container('docker') {
-          withCredentials([usernamePassword(credentialsId: 'nexus-credential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-            sh """
               docker login registry.demo.opsta.co.th -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
               docker push ${imageTag}
               """
@@ -182,7 +173,7 @@ volumes: [
             // Roll out a UAT environment on master branch
             case "master":
               sh """
-                sed -i 's/commitId: CHANGE_COMMIT_ID/value: ${scmVars.GIT_COMMIT}/g' k8s/values-uat.yaml
+                sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-uat.yaml
                 helm upgrade -i --namespace uat -f k8s/values-uat.yaml --wait petclinic-uat k8s/helm
                 """
               break
@@ -190,7 +181,7 @@ volumes: [
             // Roll out a dev environment
             case "dev":
               sh """
-                sed -i 's/commitId: CHANGE_COMMIT_ID/value: ${scmVars.GIT_COMMIT}/g' k8s/values-dev.yaml
+                sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-dev.yaml
                 helm upgrade -i --namespace dev -f k8s/values-dev.yaml --wait petclinic-dev k8s/helm
                 """
               break
