@@ -106,7 +106,7 @@ volumes: [
             ])
           } catch(err) {
             sh """
-            cat target/surefire-reports/*.dump
+            cat target/surefire-reports/*.dump | true
             """
             junit "**/target/surefire-reports/*.xml"
             step([
