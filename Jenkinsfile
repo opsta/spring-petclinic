@@ -94,7 +94,6 @@ volumes: [
             sh """
             ./mvnw clean test -s maven-settings.xml -e
             """
-            // archiveArtifacts "target/*"
             junit "**/target/surefire-reports/*.xml"
             step([
               $class: 'JUnitResultArchiver',
@@ -102,7 +101,7 @@ volumes: [
             ])
           } catch(err) {
             sh """
-            cat target/surefire-reports/*
+            cat target/surefire-reports/*.dump
             """
             throw err
           }
@@ -113,7 +112,7 @@ volumes: [
         container('java') {
           withSonarQubeEnv('sonarqube-opsta') {
             sh """
-            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:3.2:sonar
+            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:3.2:sonar -s maven-settings.xml -e
             """
           }
         }
