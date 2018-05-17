@@ -128,7 +128,7 @@ volumes: [
             protocol: 'https',
             nexusUrl: 'nexus.demo.opsta.co.th/repository/maven-releases',
             groupId: 'org.springframework.samples',
-            version: "build-${env.BUILD_NUMBER}",
+            version: "build-${env.BRANCH_NAME}-${env.BUILD_NUMBER}",
             repository: 'maven-releases',
             credentialsId: 'nexus-credential',
             artifacts: [
@@ -151,7 +151,7 @@ volumes: [
               echo ${scmVars.GIT_COMMIT} > VERSION
               # Need for download from HTTPS
               apk --no-cache add openssl wget
-              wget -O target/petclinic-build-${env.BUILD_NUMBER}.jar --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/build-${env.BUILD_NUMBER}/petclinic-build-${env.BUILD_NUMBER}.jar
+              wget -O target/petclinic-build-${env.BRANCH_NAME}-${env.BUILD_NUMBER}.jar --user=$NEXUS_USERNAME --password=$NEXUS_PASSWORD https://nexus.demo.opsta.co.th/repository/maven-releases/repository/maven-releases/org/springframework/samples/petclinic/build-${env.BRANCH_NAME}-${env.BUILD_NUMBER}/petclinic-build-${env.BRANCH_NAME}-${env.BUILD_NUMBER}.jar
               docker build -t ${imageTag} .
               docker login registry.demo.opsta.co.th -u $NEXUS_USERNAME -p $NEXUS_PASSWORD
               docker push ${imageTag}
