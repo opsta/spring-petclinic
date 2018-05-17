@@ -1,0 +1,16 @@
+web:
+  image: registry.demo.opsta.co.th/petclinic
+  tag: uat
+  logging: INFO
+  replicas: 2
+  commitId: CHANGE_COMMIT_ID
+  imagePullSecrets: nexus-credential
+db:
+  image: mariadb
+  tag: 10.3.6
+credential:
+  mysqlRootPassword: uatrootpass
+  mysqlDatabase: uatpetclinic
+  mysqlUser: uatpetuser
+  mysqlPassword: uatpetpass
+  mysqlPort: 3306

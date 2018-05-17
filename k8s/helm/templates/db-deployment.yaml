@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-db
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-db
+    spec:
+      containers:
+      - image: "{{ .Values.db.image }}:{{ .Values.db.tag }}"
+        name: {{ .Release.Name }}-db
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "{{ .Values.credential.mysqlRootPassword }}"
+        - name: MYSQL_DATABASE
+          value: "{{ .Values.credential.mysqlDatabase }}"
+        - name: MYSQL_USER
+          value: "{{ .Values.credential.mysqlUser }}"
+        - name: MYSQL_PASSWORD
+          value: "{{ .Values.credential.mysqlPassword }}"

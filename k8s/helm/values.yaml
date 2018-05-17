@@ -1,0 +1,14 @@
+web:
+  image: registry.demo.opsta.co.th/petclinic
+  tag: latest
+  logging: INFO
+  replicas: 1
+db:
+  image: mariadb
+  tag: 10.3.6
+credential:
+  mysqlRootPassword: rootpass
+  mysqlDatabase: petclinic
+  mysqlUser: petuser
+  mysqlPassword: petpass
+  mysqlPort: 3306

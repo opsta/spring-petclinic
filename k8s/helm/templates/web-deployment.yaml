@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-web
+spec:
+  replicas: {{ .Values.web.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-web
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-web
+    spec:
+      {{- if .Values.web.imagePullSecrets }}
+      imagePullSecrets:
+      - name: {{ .Values.web.imagePullSecrets }}
+      {{- end }}
+      containers:
+      - image: "{{ .Values.web.image }}:{{ .Values.web.tag }}"
+        name: {{ .Release.Name }}-web
+        env:
+        - name: PETCLINIC_LOGGING_LEVEL
+          value: "{{ .Values.web.logging }}"
+        - name: PETCLINIC_DB
+          value: "mysql"
+        - name: MYSQL_HOSTNAME
+          value: "{{ .Release.Name }}-db"
+        - name: MYSQL_DATABASE_NAME
+          value: "{{ .Values.credential.mysqlDatabase }}"
+        - name: MYSQL_USERNAME
+          value: "{{ .Values.credential.mysqlUser }}"
+        - name: MYSQL_PASSWORD
+          value: "{{ .Values.credential.mysqlPassword }}"
+        - name: MYSQL_PORT
+          value: "{{ .Values.credential.mysqlPort }}"
+        - name: COMMIT_ID
+          value: "{{ .Values.web.commitId }}"

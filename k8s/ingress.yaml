@@ -1,0 +1,42 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: petclinic-ingress-dev
+  namespace: dev
+spec:
+  rules:
+  - host: petclinic.dev.demo.opsta.co.th
+    http:
+      paths:
+      - backend:
+          serviceName: petclinic-dev-web
+          servicePort: 8080
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: petclinic-ingress-uat
+  namespace: uat
+spec:
+  rules:
+  - host: petclinic.uat.demo.opsta.co.th
+    http:
+      paths:
+      - backend:
+          serviceName: petclinic-uat-web
+          servicePort: 8080
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: petclinic-ingress-prod
+  namespace: prod
+spec:
+  rules:
+  - host: petclinic.demo.opsta.co.th
+    http:
+      paths:
+      - backend:
+          serviceName: petclinic-prod-web
+          servicePort: 8080
