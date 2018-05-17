@@ -195,8 +195,11 @@ volumes: [
       }
 
       stage("Run Performance Test") {
+        // TODO Use JMeter Parameter Instead
+        // Wait until site is ready before do performance test
         container('jmeter') {
           sh """
+          sleep 30s
           sed -i 's/localhost/petclinic.${env.BRANCH_NAME}.demo.opsta.co.th/g' src/test/jmeter/petclinic_test_plan.jmx
           jmeter -n -t src/test/jmeter/petclinic_test_plan.jmx -l performance.jtl -Jjmeter.save.saveservice.output_format=xml
           """
