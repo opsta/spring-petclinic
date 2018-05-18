@@ -13,7 +13,8 @@ podTemplate(label: label, cloud: 'kubernetes', containers: [
   containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'jmeter', image: 'opsta/jmeter', ttyEnabled: true, command: 'cat')
+  containerTemplate(name: 'jmeter', image: 'opsta/jmeter', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'robot', image: 'ppodgorsek/robot-framework:3.2.0', ttyEnabled: true, command: 'cat')
 ],
 volumes: [
   hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
@@ -106,8 +107,13 @@ volumes: [
             ])
           } catch(err) {
             sh """
-            cat target/surefire-reports/*.dump
+            cat target/surefire-reports/*.dump | true
             """
+            junit "**/target/surefire-reports/*.xml"
+            step([
+              $class: 'JUnitResultArchiver',
+              testResults: "**/target/surefire-reports/*.xml"
+            ])
             throw err
           }
         }
@@ -119,6 +125,15 @@ volumes: [
             sh """
             ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:3.2:sonar -s maven-settings.xml -e
             """
+          }
+        }
+      }
+
+      stage("Quality Gate"){
+        timeout(time: 1, unit: 'HOURS') { // Just in case something goes wrong, pipeline will be killed after a timeout
+          def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+          if (qg.status != 'OK') {
+            error "Pipeline aborted due to quality gate failure: ${qg.status}"
           }
         }
       }
@@ -194,12 +209,35 @@ volumes: [
         }
       }
 
+      stage("Run User Acceptance Test") {
+        container('robot') {
+          sh """
+          sleep 30s
+          sed -i 's!/opt/robotframework/reports!target/robot/reports!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+          sed -i 's!/opt/robotframework/tests!src/test/robotframework!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+          sed -i 's!localhost!http://petclinic.${env.BRANCH_NAME}.demo.opsta.co.th!g' src/test/robotframework/test.robot
+          export BROWSER=chrome
+          run-tests-in-virtual-screen.sh
+          """
+          step([
+            $class: 'RobotPublisher',
+            disableArchiveOutput: false,
+            logFileName: 'target/robot/reports/log.html',
+            otherFiles: '',
+            outputFileName: 'target/robot/reports/output.xml',
+            outputPath: '.',
+            passThreshold: 100,
+            reportFileName: 'target/robot/reports/report.html',
+            unstableThreshold: 0
+          ])
+        }
+      }
+
       stage("Run Performance Test") {
         // TODO Use JMeter Parameter Instead
         // Wait until site is ready before do performance test
         container('jmeter') {
           sh """
-          sleep 30s
           sed -i 's/localhost/petclinic.${env.BRANCH_NAME}.demo.opsta.co.th/g' src/test/jmeter/petclinic_test_plan.jmx
           jmeter -n -t src/test/jmeter/petclinic_test_plan.jmx -l performance.jtl -Jjmeter.save.saveservice.output_format=xml
           """
