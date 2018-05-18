@@ -216,6 +216,7 @@ volumes: [
           sed -i 's!/opt/robotframework/reports!target/robot/reports!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
           sed -i 's!/opt/robotframework/tests!src/test/robotframework!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
           sed -i 's!localhost!http://petclinic.${env.BRANCH_NAME}.demo.opsta.co.th!g' src/test/robotframework/test.robot
+          export BROWSER=chrome
           run-tests-in-virtual-screen.sh
           """
           step([
