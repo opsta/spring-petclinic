@@ -77,6 +77,30 @@ volumes: [
         }
       }
 
+      stage("Run User Acceptance Test") {
+        container('robot') {
+          sh """
+          sleep 30s
+          sed -i 's!/opt/robotframework/reports!target/robot/reports!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+          sed -i 's!/opt/robotframework/tests!src/test/robotframework!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+          sed -i 's!localhost!http://petclinic.demo.opsta.co.th!g' src/test/robotframework/test.robot
+          export BROWSER=chrome
+          run-tests-in-virtual-screen.sh
+          """
+          step([
+            $class: 'RobotPublisher',
+            disableArchiveOutput: false,
+            logFileName: 'target/robot/reports/log.html',
+            otherFiles: '',
+            outputFileName: 'target/robot/reports/output.xml',
+            outputPath: '.',
+            passThreshold: 100,
+            reportFileName: 'target/robot/reports/report.html',
+            unstableThreshold: 0
+          ])
+        }
+      }
+
     } else if(params.ACTION == "deploy-by-branch") {
       switch (env.BRANCH_NAME) {
         case "master":
