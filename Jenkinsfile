@@ -81,9 +81,11 @@ volumes: [
       switch (env.BRANCH_NAME) {
         case "master":
           imageTag = "registry.demo.opsta.co.th/${appName}:uat"
+          subDomain = "uat"
           break
         case "dev":
           imageTag = "registry.demo.opsta.co.th/${appName}:dev"
+          subDomain = "dev"
           break
         default:
           sh """
@@ -215,7 +217,7 @@ volumes: [
           sleep 30s
           sed -i 's!/opt/robotframework/reports!target/robot/reports!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
           sed -i 's!/opt/robotframework/tests!src/test/robotframework!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
-          sed -i 's!localhost!http://petclinic.${env.BRANCH_NAME}.demo.opsta.co.th!g' src/test/robotframework/test.robot
+          sed -i 's!localhost!http://petclinic.${subDomain}.demo.opsta.co.th!g' src/test/robotframework/test.robot
           export BROWSER=chrome
           run-tests-in-virtual-screen.sh
           """
@@ -238,7 +240,7 @@ volumes: [
         // Wait until site is ready before do performance test
         container('jmeter') {
           sh """
-          sed -i 's/localhost/petclinic.${env.BRANCH_NAME}.demo.opsta.co.th/g' src/test/jmeter/petclinic_test_plan.jmx
+          sed -i 's/localhost/petclinic.${subDomain}.demo.opsta.co.th/g' src/test/jmeter/petclinic_test_plan.jmx
           jmeter -n -t src/test/jmeter/petclinic_test_plan.jmx -l performance.jtl -Jjmeter.save.saveservice.output_format=xml
           """
           perfReport sourceDataFiles: 'performance.jtl'
