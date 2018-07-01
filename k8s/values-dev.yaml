@@ -6,9 +6,11 @@ web:
   commitId: CHANGE_COMMIT_ID
   imagePullSecrets: nexus-credential
   imagePullPolicy: Always
+  requestCpu: 500m
 db:
   image: mariadb
   tag: 10.3.6
+  requestCpu: 500m
 credential:
   mysqlRootPassword: rootpass
   mysqlDatabase: petclinic

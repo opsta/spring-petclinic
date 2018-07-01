@@ -37,3 +37,6 @@ spec:
           value: "{{ .Values.credential.mysqlPort }}"
         - name: COMMIT_ID
           value: "{{ .Values.web.commitId }}"
+        resources:
+          requests:
+            cpu: "{{ .Values.web.requestCpu }}"

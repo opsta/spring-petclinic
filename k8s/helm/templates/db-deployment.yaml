@@ -24,3 +24,6 @@ spec:
           value: "{{ .Values.credential.mysqlUser }}"
         - name: MYSQL_PASSWORD
           value: "{{ .Values.credential.mysqlPassword }}"
+        resources:
+          requests:
+            cpu: "{{ .Values.db.requestCpu }}"
