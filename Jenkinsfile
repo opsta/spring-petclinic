@@ -145,6 +145,42 @@ volumes: [
         }
       }
 
+      stage('Run OWASP Dependency Check') {
+        container('java') {
+          try {
+            dependencyCheckAnalyzer(
+              datadir: '',
+              hintsFile: '',
+              includeCsvReports: false,
+              includeHtmlReports: false,
+              includeJsonReports: false,
+              includeVulnReports: false,
+              isAutoupdateDisabled: false,
+              outdir: '',
+              scanpath: '',
+              skipOnScmChange: false,
+              skipOnUpstreamChange: false,
+              suppressionFile: '',
+              zipExtensions: ''
+            )
+          
+            dependencyCheckPublisher(
+              canComputeNew: false,
+              defaultEncoding: '',
+              healthy: '',
+              pattern: '',
+              unHealthy: '',
+              failedTotalHigh: '1'
+            )
+          } catch (Exception e) {
+            echo "Result = " + owasp_output
+            echo "Result error = " + e.toString()
+            def owasp_output = input(message: 'Fail to scan dependency', ok: 'Continue')
+          }
+
+        }
+      }
+
       stage('SonarQube analysis') {
         container('java') {
           withSonarQubeEnv('sonarqube-opsta') {
