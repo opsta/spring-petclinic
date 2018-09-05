@@ -151,12 +151,12 @@ volumes: [
         container('java') {
           try {
             dependencyCheckAnalyzer(
-              datadir: '',
+              datadir: '/home/jenkins/dependency-check-data',
               hintsFile: '',
-              includeCsvReports: false,
-              includeHtmlReports: false,
-              includeJsonReports: false,
-              includeVulnReports: false,
+              includeCsvReports: true,
+              includeHtmlReports: true,
+              includeJsonReports: true,
+              includeVulnReports: true,
               isAutoupdateDisabled: false,
               outdir: '',
               scanpath: '',
