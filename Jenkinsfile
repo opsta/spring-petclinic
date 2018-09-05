@@ -18,6 +18,8 @@ podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 60, containers: [
 ],
 volumes: [
   hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
+  hostPathVolume(mountPath: '/root/.m2', hostPath: '/tmp/jenkins/.m2'),
+  hostPathVolume(mountPath: '/home/jenkins/dependency-check-data', hostPath: '/tmp/jenkins/dependency-check-data')
 ]) {
   node(label) {
 
