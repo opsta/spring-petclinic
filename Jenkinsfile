@@ -6,7 +6,7 @@ properties([
   ])
 ])
 
-def label = "petclinic-${UUID.randomUUID().toString()}"
+def label = "petclinic"
 podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 60, containers: [
   // Don't use alpine version. It having problem with forking JVM such as running surefire and junit testing
   containerTemplate(name: 'java', image: 'openjdk:8u181-jdk-stretch', ttyEnabled: true, command: 'cat'),
