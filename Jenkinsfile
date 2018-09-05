@@ -7,7 +7,7 @@ properties([
 ])
 
 def label = "petclinic"
-podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 60, containers: [
+podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 360, containers: [
   // Don't use alpine version. It having problem with forking JVM such as running surefire and junit testing
   containerTemplate(name: 'java', image: 'openjdk:8u181-jdk-stretch', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'docker', image: 'docker:18.06.1-ce', ttyEnabled: true, command: 'cat'),
@@ -18,8 +18,7 @@ podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 60, containers: [
 ],
 volumes: [
   hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
-  hostPathVolume(mountPath: '/root/.m2', hostPath: '/tmp/jenkins/.m2'),
-  hostPathVolume(mountPath: '/home/jenkins/dependency-check-data', hostPath: '/tmp/jenkins/dependency-check-data')
+  hostPathVolume(mountPath: '/root/.m2', hostPath: '/tmp/jenkins/.m2')
 ]) {
   node(label) {
 
@@ -151,7 +150,7 @@ volumes: [
         container('java') {
           try {
             dependencyCheckAnalyzer(
-              datadir: '/home/jenkins/dependency-check-data',
+              datadir: '/home/jenkins/workspace/dependency-check-data',
               hintsFile: '',
               includeCsvReports: true,
               includeHtmlReports: true,
