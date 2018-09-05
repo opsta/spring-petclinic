@@ -7,13 +7,13 @@ properties([
 ])
 
 def label = "petclinic-${UUID.randomUUID().toString()}"
-podTemplate(label: label, cloud: 'kubernetes', containers: [
+podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 60, containers: [
   // Don't use alpine version. It having problem with forking JVM such as running surefire and junit testing
-  containerTemplate(name: 'java', image: 'openjdk:8u171-jdk-stretch', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'jmeter', image: 'opsta/jmeter', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'java', image: 'openjdk:8u181-jdk-stretch', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'docker', image: 'docker:18.06.1-ce', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.10.0', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git:latest', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'jmeter', image: 'opsta/jmeter:latest', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'robot', image: 'ppodgorsek/robot-framework:3.2.0', ttyEnabled: true, command: 'cat')
 ],
 volumes: [
