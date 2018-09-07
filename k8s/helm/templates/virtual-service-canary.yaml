@@ -1,0 +1,19 @@
+{{- if eq .Values.web.version "canary" }}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-web
+spec:
+  hosts:
+    - {{ .Release.Name }}-web
+  http:
+  - route:
+    - destination:
+        host: {{ .Release.Name }}-web
+        subset: release
+      weight: {{ .Values.web.weightRelease }}
+    - destination:
+        host: {{ .Release.Name }}-web
+        subset: canary
+      weight: {{ .Values.web.weightCanary }}
+{{- end }}

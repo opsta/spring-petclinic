@@ -63,42 +63,93 @@ volumes: [
 
     } else if(params.ACTION == "deploy-production") {
       // Deploy to production
-      stage('Deploy production') {
-        scmVars = checkout scm
-        container('helm') {
-          withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
-            sh """
-              mkdir -p ~/.kube/
-              cat $KUBECONFIG > ~/.kube/config
-              sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
-              sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
-              helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod k8s/helm
-              """
+
+      stages {
+        stage('Canary Release 10%') {
+          scmVars = checkout scm
+          container('helm') {
+            withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
+              sh """
+                mkdir -p ~/.kube/
+                cat $KUBECONFIG > ~/.kube/config
+                sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
+                sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
+                sed -i 's/version: release/version: canary/g' k8s/values-prod.yaml
+                sed -i 's/weightRelease: 100/weightRelease: 90/g' k8s/values-prod.yaml
+                sed -i 's/weightCanary: 0/weightCanary: 10/g' k8s/values-prod.yaml
+                helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod-canary k8s/helm
+                """
+            }
+          }
+        }
+
+        stage('Checking Canary Release 10%') {
+          scmVars = checkout scm
+          container('helm') {
+            withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
+              sh """
+                sleep 60s
+                """
+            }
+          }
+        }
+
+        // stage('Deploy production') {
+        //   scmVars = checkout scm
+        //   container('helm') {
+        //     withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
+        //       sh """
+        //         mkdir -p ~/.kube/
+        //         cat $KUBECONFIG > ~/.kube/config
+        //         sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
+        //         sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
+        //         helm delete --purge --wait petclinic-prod-canary
+        //         helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod k8s/helm
+        //         """
+        //     }
+        //   }
+        // }
+
+        stage("Run User Acceptance Test") {
+          container('robot') {
+            try {
+              sh """
+                sleep 30s
+                sed -i 's!/opt/robotframework/reports!target/robot/reports!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+                sed -i 's!/opt/robotframework/tests!src/test/robotframework!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+                sed -i 's!localhost!http://petclinic.demo.opsta.co.th!g' src/test/robotframework/test.robot
+                export BROWSER=chrome
+                run-tests-in-virtual-screen.sh
+                """
+            } finally {
+              step([
+                $class: 'RobotPublisher',
+                disableArchiveOutput: false,
+                logFileName: 'target/robot/reports/log.html',
+                otherFiles: '',
+                outputFileName: 'target/robot/reports/output.xml',
+                outputPath: '.',
+                passThreshold: 100,
+                reportFileName: 'target/robot/reports/report.html',
+                unstableThreshold: 0
+              ])
+            }
           }
         }
       }
 
-      stage("Run User Acceptance Test") {
-        container('robot') {
-          sh """
-          sleep 30s
-          sed -i 's!/opt/robotframework/reports!target/robot/reports!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
-          sed -i 's!/opt/robotframework/tests!src/test/robotframework!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
-          sed -i 's!localhost!http://petclinic.demo.opsta.co.th!g' src/test/robotframework/test.robot
-          export BROWSER=chrome
-          run-tests-in-virtual-screen.sh
-          """
-          step([
-            $class: 'RobotPublisher',
-            disableArchiveOutput: false,
-            logFileName: 'target/robot/reports/log.html',
-            otherFiles: '',
-            outputFileName: 'target/robot/reports/output.xml',
-            outputPath: '.',
-            passThreshold: 100,
-            reportFileName: 'target/robot/reports/report.html',
-            unstableThreshold: 0
-          ])
+      post {
+        failure {
+          scmVars = checkout scm
+          container('helm') {
+            withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
+              sh """
+                mkdir -p ~/.kube/
+                cat $KUBECONFIG > ~/.kube/config
+                helm delete --purge --wait petclinic-prod-canary
+                """
+            }
+          }
         }
       }
 
@@ -274,25 +325,28 @@ volumes: [
 
       stage("Run User Acceptance Test") {
         container('robot') {
-          sh """
-          sleep 30s
-          sed -i 's!/opt/robotframework/reports!target/robot/reports!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
-          sed -i 's!/opt/robotframework/tests!src/test/robotframework!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
-          sed -i 's!localhost!http://petclinic.${subDomain}.demo.opsta.co.th!g' src/test/robotframework/test.robot
-          export BROWSER=chrome
-          run-tests-in-virtual-screen.sh
-          """
-          step([
-            $class: 'RobotPublisher',
-            disableArchiveOutput: false,
-            logFileName: 'target/robot/reports/log.html',
-            otherFiles: '',
-            outputFileName: 'target/robot/reports/output.xml',
-            outputPath: '.',
-            passThreshold: 100,
-            reportFileName: 'target/robot/reports/report.html',
-            unstableThreshold: 0
-          ])
+          try {
+            sh """
+              sleep 30s
+              sed -i 's!/opt/robotframework/reports!target/robot/reports!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+              sed -i 's!/opt/robotframework/tests!src/test/robotframework!g' /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+              sed -i 's!localhost!http://petclinic.${subDomain}.demo.opsta.co.th!g' src/test/robotframework/test.robot
+              export BROWSER=chrome
+              run-tests-in-virtual-screen.sh
+              """
+          } finally {
+            step([
+              $class: 'RobotPublisher',
+              disableArchiveOutput: false,
+              logFileName: 'target/robot/reports/log.html',
+              otherFiles: '',
+              outputFileName: 'target/robot/reports/output.xml',
+              outputPath: '.',
+              passThreshold: 100,
+              reportFileName: 'target/robot/reports/report.html',
+              unstableThreshold: 0
+            ])
+          }
         }
       }
 
