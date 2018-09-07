@@ -64,43 +64,9 @@ volumes: [
     } else if(params.ACTION == "deploy-production") {
       // Deploy to production
 
-      scmVars = checkout([
-        $class: 'GitSCM',
-        branches: [[name: "refs/tags/" + params.TAG]],
-        doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
-        extensions: scm.extensions,
-        userRemoteConfigs: scm.userRemoteConfigs
-      ])
+      scmVars = checkout scm
 
-      stage('Canary Release 10%') {
-        container('helm') {
-          withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
-            sh """
-              mkdir -p ~/.kube/
-              cat $KUBECONFIG > ~/.kube/config
-              sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
-              sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
-              sed -i 's/version: release/version: canary/g' k8s/values-prod.yaml
-              sed -i 's/weightRelease: 100/weightRelease: 90/g' k8s/values-prod.yaml
-              sed -i 's/weightCanary: 0/weightCanary: 10/g' k8s/values-prod.yaml
-              helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod-canary k8s/helm
-              """
-          }
-        }
-      }
-
-      stage('Checking Canary Release 10%') {
-        container('helm') {
-          withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
-            sh """
-              sleep 60s
-              """
-          }
-        }
-      }
-
-      // stage('Deploy production') {
-      //   scmVars = checkout scm
+      // stage('Canary Release 10%') {
       //   container('helm') {
       //     withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
       //       sh """
@@ -108,12 +74,39 @@ volumes: [
       //         cat $KUBECONFIG > ~/.kube/config
       //         sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
       //         sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
-      //         helm delete --purge --wait petclinic-prod-canary
-      //         helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod k8s/helm
+      //         sed -i 's/version: release/version: canary/g' k8s/values-prod.yaml
+      //         sed -i 's/weightRelease: 100/weightRelease: 90/g' k8s/values-prod.yaml
+      //         sed -i 's/weightCanary: 0/weightCanary: 10/g' k8s/values-prod.yaml
+      //         helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod-canary k8s/helm
       //         """
       //     }
       //   }
       // }
+
+      // stage('Checking Canary Release 10%') {
+      //   container('helm') {
+      //     withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
+      //       sh """
+      //         sleep 60s
+      //         """
+      //     }
+      //   }
+      // }
+
+      stage('Deploy production') {
+        container('helm') {
+          withCredentials([file(credentialsId: 'gce-k8s-kubeconfig', variable: 'KUBECONFIG')]) {
+            sh """
+              mkdir -p ~/.kube/
+              cat $KUBECONFIG > ~/.kube/config
+              sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
+              sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
+              helm delete --purge --wait petclinic-prod-canary
+              helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod k8s/helm
+              """
+          }
+        }
+      }
 
       stage("Run User Acceptance Test") {
         container('robot') {
