@@ -11,6 +11,7 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-web
+        version: {{ .Values.web.version }}
     spec:
       {{- if .Values.web.imagePullSecrets }}
       imagePullSecrets:
