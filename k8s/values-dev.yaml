@@ -5,8 +5,6 @@ web:
   replicas: 1
   commitId: CHANGE_COMMIT_ID
   version: release
-  weightRelease: 100
-  weightCanary: 0
   imagePullSecrets: nexus-credential
   imagePullPolicy: Always
   requestCpu: 500m
