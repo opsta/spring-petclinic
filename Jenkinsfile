@@ -101,7 +101,6 @@ volumes: [
               cat $KUBECONFIG > ~/.kube/config
               sed -i 's/tag: latest/tag: ${params.TAG}/g' k8s/values-prod.yaml
               sed -i 's/commitId: CHANGE_COMMIT_ID/commitId: ${scmVars.GIT_COMMIT}/g' k8s/values-prod.yaml
-              helm delete --purge --wait petclinic-prod-canary
               helm upgrade -i --namespace prod -f k8s/values-prod.yaml --wait petclinic-prod k8s/helm
               """
           }
