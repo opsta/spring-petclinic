@@ -10,7 +10,7 @@ def label = "petclinic"
 podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 360, containers: [
   // Don't use alpine version. It having problem with forking JVM such as running surefire and junit testing
   containerTemplate(name: 'java', image: 'openjdk:8u181-jdk-stretch', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'docker', image: 'docker:18.06.1-ce', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'docker', image: 'docker:18.09.0', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.11.0', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'git', image: 'paasmule/curl-ssl-git:latest', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'jmeter', image: 'opsta/jmeter:latest', ttyEnabled: true, command: 'cat'),
