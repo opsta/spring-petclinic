@@ -216,7 +216,7 @@ volumes: [
         container('java') {
           withSonarQubeEnv('sonarqube-opsta') {
             sh """
-            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:3.2:sonar -s maven-settings.xml -e
+            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar -s maven-settings.xml -e
             """
           }
         }
