@@ -4,7 +4,7 @@ Library  SeleniumLibrary
 *** Variables ***
 ${BROWSER}  %{BROWSER}
 
-*** Testcases ***
+*** Test Cases ***
 Test Home Page
   Open Browser  localhost  ${BROWSER}
   Page Should Contain  Welcome
