@@ -9,7 +9,7 @@ properties([
 def label = "petclinic"
 podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 360, containers: [
   // Don't use alpine version. It having problem with forking JVM such as running surefire and junit testing
-  containerTemplate(name: 'java', image: 'openjdk:11.0.5-jdk-stretch', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'java', image: 'openjdk:8u232-jdk-stretch', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'docker', image: 'docker:19.03.3-dind', ttyEnabled: true, privileged: true, 
     command: 'dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 --storage-driver=overlay2'),
   containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.15.0', ttyEnabled: true, command: 'cat'),
