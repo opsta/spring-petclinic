@@ -10,7 +10,7 @@ web:
   requestCpu: 500m
 db:
   image: mariadb
-  tag: 10.3.6
+  tag: 10.4.8-bionic
   requestCpu: 500m
 credential:
   mysqlRootPassword: rootpass

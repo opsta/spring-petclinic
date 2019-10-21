@@ -9,15 +9,16 @@ properties([
 def label = "petclinic"
 podTemplate(label: label, cloud: 'kubernetes', idleMinutes: 360, containers: [
   // Don't use alpine version. It having problem with forking JVM such as running surefire and junit testing
-  containerTemplate(name: 'java', image: 'openjdk:8u181-jdk-stretch', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'docker', image: 'docker:18.09.3', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.13.0', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'java', image: 'openjdk:11.0.5-jdk-stretch', ttyEnabled: true, command: 'cat'),
+  containerTemplate(name: 'docker', image: 'docker:19.03.3-dind', ttyEnabled: true, privileged: true, 
+    command: 'dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 --storage-driver=overlay2'),
+  containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.15.0', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'git', image: 'alpine/git:1.0.7', ttyEnabled: true, command: 'cat'),
   containerTemplate(name: 'jmeter', image: 'opsta/jmeter:latest', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'robot', image: 'ppodgorsek/robot-framework:3.2.2', ttyEnabled: true, command: 'cat')
+  containerTemplate(name: 'robot', image: 'ppodgorsek/robot-framework:3.4.0', ttyEnabled: true, command: 'cat')
 ],
 volumes: [
-  hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
+  hostPathVolume(mountPath: '/home/jenkins/dependency-check-data', hostPath: '/tmp/jenkins/dependency-check-data'),
   hostPathVolume(mountPath: '/root/.m2', hostPath: '/tmp/jenkins/.m2')
 ]) {
   node(label) {
@@ -195,29 +196,12 @@ volumes: [
       stage('Run OWASP Dependency Check') {
         container('java') {
           try {
-            dependencyCheckAnalyzer(
-              datadir: '/home/jenkins/workspace/dependency-check-data',
-              hintsFile: '',
-              includeCsvReports: true,
-              includeHtmlReports: true,
-              includeJsonReports: true,
-              includeVulnReports: true,
-              isAutoupdateDisabled: false,
-              outdir: '',
-              scanpath: '',
-              skipOnScmChange: false,
-              skipOnUpstreamChange: false,
-              suppressionFile: '',
-              zipExtensions: ''
+            dependencyCheck(
+              additionalArguments: "--data /home/jenkins/dependency-check-data --out dependency-check-report.xml",
+              odcInstallation: "dependency-check"
             )
-          
             dependencyCheckPublisher(
-              canComputeNew: false,
-              defaultEncoding: '',
-              healthy: '',
-              pattern: '',
-              unHealthy: '',
-              failedTotalHigh: '1'
+              pattern: 'dependency-check-report.xml'
             )
           } catch (Exception e) {
             echo "Result = " + owasp_output
