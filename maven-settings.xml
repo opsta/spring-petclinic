@@ -4,7 +4,7 @@
     <mirror>
       <id>Nexus</id>
       <name>Nexus Maven Mirror</name>
-      <url>https://nexus.demo.opsta.co.th/repository/maven-central</url>
+      <url>https://nexus.demo.opsta.co.th/repository/maven-central/</url>
       <mirrorOf>*</mirrorOf>
     </mirror>
   </mirrors>
